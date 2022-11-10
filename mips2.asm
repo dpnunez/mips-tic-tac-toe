@@ -1,6 +1,6 @@
 .data
 	player: .asciiz "Jogador "
-	doMove: .asciiz ", faça sua jogada: "
+	doMove: .asciiz ", faÃ§a sua jogada: "
 	newLine: .asciiz "\n"
 	currentMove: .space 3		# xy\n (BUFFER DE STRING)
 	
@@ -11,7 +11,7 @@
 .text
 main:
 	addi $t0, $zero, 1		# t0 = jogador atual
-	la $t1, board			# t1 = endereço de board
+	la $t1, board			# t1 = endereï¿½o de board
 	addi $t9, $zero, 0		# t9 = numero de jogadas realizadas
 gameLoop:
 	jal printPlayerMessage
@@ -25,7 +25,7 @@ gameLoop:
 	
 	j gameLoop
 	
-printPlayerMessage:			# Responsavel por imprimir "Jogador X, faça sua jogada"
+printPlayerMessage:			# Responsavel por imprimir "Jogador X, faï¿½a sua jogada"
 	li $v0,4
 	la $a0, player
 	syscall
@@ -73,7 +73,7 @@ printBoard:
 	addi $t5, $zero, 0		# index column
 	loopRow:	beq $t4, 3, endLoopRow
 			sll $t8, $t4, 2		# multiplicador para acessar posicao na memoria (4 em 4) [linha]
-			la $t2, board($t8)	# endereço da linha atual
+			la $t2, board($t8)	# endereï¿½o da linha atual
 
 	loopColumn: 	beq $t5, 3, endLoopColumn
 			# acessar row e coluna no array (pseudo-matriz)
@@ -88,8 +88,9 @@ printBoard:
 			syscall
 			addi $t5, $t5, 1
 			j loopColumn
-	endLoopColumn:	li $a0, newLine
-			li $v0, 11
+	endLoopColumn:	
+			la $a0, newLine
+			li $v0, 4
 			syscall
 			addi $t5, $zero, 0
 			addi $t4, $t4, 1

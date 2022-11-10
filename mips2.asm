@@ -1,13 +1,15 @@
 .data
-	player: .asciiz "Jogador "
-	doMove: .asciiz ", faça sua jogada: "
-	newLine: .asciiz "\n"
-	currentMove: .space 3		# xy\n (BUFFER DE STRING)
-	
 	board: .word line1, line2, line3
-	line1: .word 0, 1, 2
-	line2: .word 3, 4, 5
-	line3: .word 6, 7, 8
+	line1: .word 1, 0, 0
+	line2: .word 0, 0, 0
+	line3: .word 0, 0, 0
+
+	currentMove: .space 3		# xy\n (BUFFER DE STRING)
+	player: .asciiz "Jogador "
+	doMove: .asciiz ", faça sua jogada: \n"
+	newLine: .asciiz "\n"
+	invalidMove: .asciiz "Movimento invalido, insira sua jogada novamente\n"
+	valorNaposicao: .asciiz "valor aqui: \n"
 .text
 main:
 	addi $t0, $zero, 1		# t0 = jogador atual
@@ -17,14 +19,69 @@ gameLoop:
 	jal printPlayerMessage
 	jal readPlayerMove
 	# move's validation
+	jal moveValidation
+	beq $v1, 1, gameLoop	# caso a flag de erro na validaçao seja 1, ler novamente a jogada
 	# print game
 	jal printBoard
 	# verifyWin
 	jal verifyEnd
 	jal togglePlayer
-	
+		
 	j gameLoop
+
+moveValidation:
+	move $t4, $zero
+	move $t2, $zero
+	move $t5, $zero
+	move $t6, $zero
+								# verificar se o movimento inserido é valido (está nas coordenada valida não ocupada)
+	la $t4, currentMove
+	lb $t5, ($t4)
+	addi $t5, $t5, -48		# converter char para numbero
+	addi $t4, $t4, 1
+	lb $t6, ($t4)
+	addi $t6, $t6, -48		# converter char para numbero
 	
+	# validar X
+	# if(x < 0 || x > 2) retornar flag de erro
+	slti $t7, $t5, 0
+	beq $t7, 1, moveInvalid
+	sle $t7, $t5, 2
+	beqz $t7, moveInvalid
+	
+	# validar y
+	# if(y < 0 || y > 2) retornar flag de erro
+	slti $t7, $t6, 0
+	beq $t7, 1, moveInvalid
+	sle $t7, $t6, 2
+	beqz $t7, moveInvalid
+	
+	# validar se a posicao xy já está ocupada
+	sll $t6, $t6, 2
+	lw $t2, board($t6)		# endereço da linha
+	
+	
+	sll $t5, $t5, 2
+	add $t2, $t2, $t5
+	lw $t3, ($t2)
+	
+	
+	bne $t3, 0, moveInvalid		# casa ja ocupada
+	
+	
+	addi $v1, $zero, 0		# flag de retorno em caso de sucesso
+	
+	jr $ra
+	moveInvalid:
+		li $v0, 4
+		la $a0, invalidMove	
+		syscall					# imprimir mensagem de movimento invalido
+		
+		addi $v1, $zero, 1		# flag de retorno em caso de erro
+			
+		jr $ra
+		
+
 printPlayerMessage:			# Responsavel por imprimir "Jogador X, fa�a sua jogada"
 	li $v0,4
 	la $a0, player
@@ -53,7 +110,6 @@ readPlayerMove:
 	li $v0,4
 	la $a0, newLine
 	syscall
-	addi $t9, $t9, 1	# verificar pq t9 n atualiza em tempo real
 	jr $ra
 
 togglePlayer:
@@ -62,6 +118,8 @@ togglePlayer:
 	jr $ra
 	changeTo2:
 	addi $t0, $zero, 2
+	
+	addi $t9, $t9, 1
 	jr $ra
 
 verifyEnd:

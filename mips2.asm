@@ -2,7 +2,7 @@
 	board: .word line1, line2, line3
 	line1: .word 0, 0, 0
 	line2: .word 0, 0, 0
-	line3: .word 0, 0, 0
+	line3: .word 0, 2, 1
 
 	currentMove: .space 3		# yx\n (BUFFER DE STRING)
 	player: .asciiz "Jogador "
@@ -20,6 +20,7 @@ main:
 	
 	jal printInstrucoes
 gameLoop:
+	jal verifyEnd 			# ToDo: verificar vitoria
 	
 	jal printPlayerMessage
 	jal readPlayerMove
@@ -28,7 +29,7 @@ gameLoop:
 
 	jal registrarMovimento
 	jal printBoard
-	jal verifyEnd 			# ToDo: verificar vitoria
+	
 	jal togglePlayer
 		
 	j gameLoop
@@ -156,6 +157,38 @@ togglePlayer:
 
 verifyEnd:
 	beq $s6, 9, end
+	move $t0, $zero
+	
+	# registrar todos as celulas no registrador t0, cada celula é representada por 2bits, os 2 bits menos significativos representam a celula 22 (os mais sig. a celula 00)
+	addi $t4, $zero, 0		# index row
+	addi $t5, $zero, 0		# index column
+	qloopRow:	beq $t4, 3, qendLoopRow
+			sll $t8, $t4, 2		# multiplicador para acessar posicao na memoria (4 em 4) [linha]
+			la $t2, board($t8)	# endereï¿½o da linha atual
+
+	qloopColumn: 	beq $t5, 3, qendLoopColumn
+			# acessar row e coluna no array (pseudo-matriz)
+			sll $t8, $t5, 2		# multiplicador para acessar posicao na memoria (4 em 4) [coluna]
+			
+			lw $t6, 0($t2)
+			add $t6, $t6, $t8
+			lw $t7, 0($t6)
+			sll $t0, $t0, 2
+			or $t0, $t0, $t7
+			
+			addi $t5, $t5, 1
+			j qloopColumn
+	qendLoopColumn:	
+			addi $t5, $zero, 0
+			addi $t4, $t4, 1
+			j qloopRow
+	qendLoopRow:
+	
+	# xx xx xx xx xx xx 01 01 01 || xx xx xx xx xx xx 11 11 11
+	# xx xx xx 01 01 01 xx xx xx  || xx xx xx 11 11 11 xx xx xx
+	# 01 01 01 xx xx xx xx xx xx  || 11 11 11 xx xx xx xx xx xx
+	
+	
 
 	jr $ra
 
